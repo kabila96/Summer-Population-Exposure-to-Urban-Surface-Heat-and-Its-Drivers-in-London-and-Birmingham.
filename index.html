@@ -1,0 +1,2562 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/filter.css">
+<link rel="stylesheet" href="css/nouislider.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+        .project-header {
+            position: absolute;
+            z-index: 1000;
+            top: 10px;
+            left: 62px;
+            box-sizing: border-box;
+            width: min(445px, calc(80% - 72px));
+            padding: 8px 12px;
+            color: #fff;
+            background: linear-gradient(135deg, rgba(127, 0, 0, 0.96), rgba(215, 48, 31, 0.96));
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 9px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            text-align: center;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        .project-header h1 {
+            margin: 0 0 5px;
+            font-size: 13.5px;
+            line-height: 1.25;
+        }
+        .project-header p {
+            margin: 2px 0;
+            font-size: 10.5px;
+            line-height: 1.35;
+        }
+        .project-abstract {
+            position: absolute;
+            z-index: 1001;
+            top: 135px;
+            left: 62px;
+            box-sizing: border-box;
+            width: min(365px, calc(80% - 72px));
+            max-height: 390px;
+            overflow-y: auto;
+            padding: 8px 10px;
+            color: #252525;
+            background: rgba(255,255,255,0.97);
+            border: 1px solid #d9b38c;
+            border-radius: 7px;
+            box-shadow: 0 2px 7px rgba(0,0,0,0.25);
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+            line-height: 1.4;
+        }
+        .project-abstract summary {
+            color: #7f0000;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .project-abstract p { margin: 8px 0; }
+        .project-abstract ul { margin: 7px 0; padding-left: 18px; }
+        .project-abstract li { margin-bottom: 6px; }
+        .interpretation-note {
+            padding: 7px;
+            background: #fff3cd;
+            border-left: 3px solid #d39e00;
+        }
+
+        /* Professional styling for the left-side Leaflet controls */
+        .leaflet-left .leaflet-control {
+            margin-left: 10px;
+            border: 0 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+            overflow: hidden;
+        }
+        .leaflet-control-zoom a,
+        #gcd-button-control {
+            width: 38px !important;
+            height: 38px !important;
+            line-height: 38px !important;
+            color: #fff !important;
+            background: #a50f15 !important;
+            border: 0 !important;
+            text-align: center;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+        .leaflet-control-zoom a:hover,
+        #gcd-button-control:hover {
+            background: #de2d26 !important;
+            transform: scale(1.03);
+        }
+        .leaflet-control-zoom-in {
+            border-bottom: 1px solid rgba(255,255,255,0.35) !important;
+        }
+        .leaflet-control-search input {
+            height: 38px;
+            padding: 0 10px;
+            border: 1px solid #a50f15;
+            border-radius: 0 7px 7px 0;
+            font-size: 12px;
+        }
+
+        /* Professional styling for the right-hand filter panel */
+        #menu {
+            box-sizing: border-box;
+            height: 100%;
+            padding: 12px 14px 22px;
+            overflow-y: auto;
+            color: #2f2f2f;
+            background: linear-gradient(180deg, #fffaf4 0%, #f7f7f7 100%);
+            border-left: 1px solid #d8c7b7;
+            box-shadow: -3px 0 10px rgba(0,0,0,0.10);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #menu::before {
+            content: "Explore and filter MSOAs";
+            display: block;
+            position: sticky;
+            top: -12px;
+            z-index: 5;
+            margin: -12px -14px 18px;
+            padding: 12px 14px;
+            color: #fff;
+            background: linear-gradient(135deg, #7f0000, #d7301f);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+        }
+        #menu .slider {
+            margin: 20px 10px 10px;
+        }
+        #menu .filterlabel {
+            margin: 5px 0;
+            color: #343434;
+            font-size: 12px;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+        #menu .filterlabel + .filterlabel {
+            display: inline-block;
+            margin: 2px 0 14px;
+            padding: 5px 9px;
+            color: #a50f15;
+            background: #fff;
+            border: 1px solid #d9a3a5;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.25px;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        #menu .filterlabel + .filterlabel:hover {
+            color: #fff;
+            background: #a50f15;
+            border-color: #a50f15;
+        }
+        #menu select {
+            box-sizing: border-box;
+            width: 100% !important;
+            margin: 5px 0 6px;
+            padding: 7px 8px;
+            color: #333;
+            background: #fff;
+            border: 1px solid #c7a28e;
+            border-radius: 6px;
+            font-size: 11.5px;
+            outline: none;
+        }
+        #menu select:focus {
+            border-color: #a50f15;
+            box-shadow: 0 0 0 2px rgba(165,15,21,0.14);
+        }
+        #menu .noUi-target {
+            height: 7px;
+            background: #eadfd7;
+            border: 0;
+            border-radius: 999px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.12);
+        }
+        #menu .noUi-connect {
+            background: linear-gradient(90deg, #f16913, #a50f15);
+        }
+        #menu .noUi-handle {
+            width: 22px !important;
+            height: 22px !important;
+            top: -8px !important;
+            right: -11px !important;
+            background: #fff;
+            border: 2px solid #a50f15;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+            cursor: grab;
+        }
+        #menu .noUi-handle:active { cursor: grabbing; }
+        #menu .noUi-handle::before,
+        #menu .noUi-handle::after { display: none; }
+        #menu::-webkit-scrollbar { width: 9px; }
+        #menu::-webkit-scrollbar-track { background: #eee5df; }
+        #menu::-webkit-scrollbar-thumb {
+            background: #b85a50;
+            border: 2px solid #eee5df;
+            border-radius: 999px;
+        }
+
+        @media (max-width: 700px) {
+            .project-header {
+                left: 58px;
+                width: calc(100% - 68px);
+            }
+            .project-header h1 { font-size: 12.5px; }
+            .project-abstract {
+                top: 155px;
+                left: 10px;
+                width: calc(100% - 20px);
+                max-height: 330px;
+            }
+        }
+        </style>
+        <title>Summer Population Exposure to Urban Surface Heat and Its Drivers in London and Birmingham (2021–2025) | Powell A. Ndlovu</title>
+    </head>
+    <body>
+        <header class="project-header">
+            <h1>Summer Population Exposure to Urban Surface Heat and Its Drivers in London and Birmingham: A Comparative MSOA-Level Analysis (2021–2025)</h1>
+            <p>By Powell A. Ndlovu &bull; MSc GIS and Climate Change &bull; Swansea University &bull; Student Number: 2019750</p>
+            <p><strong>Current map:</strong> Mean heatwave land surface temperature (LST) from 2021 to 2025 across London and Birmingham MSOAs</p>
+        </header>
+
+        <details class="project-abstract">
+            <summary>About this dashboard and indicators</summary>
+            <p>This interactive dashboard compares mean heatwave land surface temperature (LST), population exposure and heat vulnerability across London and Birmingham MSOAs from 2021 to 2025.</p>
+            <p><strong>How to use:</strong> Click an MSOA to view its heat and exposure information. Drag to pan, use +/− to zoom, and use the search and filter controls to explore locations or vulnerability categories.</p>
+            <ul>
+                <li><strong>Mean Heatwave LST:</strong> Average satellite-derived surface temperature during selected heatwave events; it is not air temperature.</li>
+                <li><strong>Above P90 Threshold:</strong> The MSOA is within the hottest 10% under its city-specific threshold.</li>
+                <li><strong>Elderly Heat Vulnerability:</strong> Residents aged 65+ living in an MSOA above the P90 threshold.</li>
+                <li><strong>Deprivation Heat Vulnerability:</strong> Deprived households located in an MSOA above the P90 threshold.</li>
+                <li><strong>Population Heat Exposure:</strong> Total population living in an MSOA above the P90 threshold.</li>
+                <li><strong>Overall Vulnerability:</strong> Combined heat, population, elderly and deprivation classification.</li>
+            </ul>
+            <p class="interpretation-note"><strong>Important:</strong> A zero exposure value means that the MSOA was not classified above the P90 threshold. It does not mean that the area has no residents or no heat risk.</p>
+        </details>
+
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/tailDT.js"></script>
+<script src="js/nouislider.min.js"></script>
+<script src="js/wNumb.js"></script>
+        <script src="data/London_1.js"></script>
+        <script src="data/Birmingharm_2.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+
+            if (e.target.feature.geometry.type === 'LineString' || e.target.feature.geometry.type === 'MultiLineString') {
+              highlightLayer.setStyle({
+                color: 'rgba(255, 255, 0, 1.00)',
+              });
+            } else {
+              highlightLayer.setStyle({
+                fillColor: 'rgba(255, 255, 0, 1.00)',
+                fillOpacity: 1
+              });
+            }
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        })
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    var img = popup._contentNode.querySelector('td img');
+                    if (img) {
+                        // If already loaded (cache), update immediately
+                        if (img.complete && img.naturalHeight > 0) {
+                            popup.update();
+                        } else {
+                            img.addEventListener('load', function() {
+                                popup.update();
+                            });
+                            img.addEventListener('error', function() {
+                                popup.update();
+                            });
+                        }
+                    }
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+            if (bounds_group.getLayers().length) {
+                map.fitBounds(bounds_group.getBounds());
+            }
+        }
+        map.createPane('pane_OpenStreetMap_0');
+        map.getPane('pane_OpenStreetMap_0').style.zIndex = 400;
+        var layer_OpenStreetMap_0 = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            pane: 'pane_OpenStreetMap_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 19
+        });
+        layer_OpenStreetMap_0;
+        map.addLayer(layer_OpenStreetMap_0);
+        function pop_London_1(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA21CD" colspan="2"><strong>MSOA Code</strong><br />' + (feature.properties['MSOA21CD'] !== null ? autolinker.link(String(feature.properties['MSOA21CD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA21NM" colspan="2"><strong>MSOA Name</strong><br />' + (feature.properties['MSOA21NM'] !== null ? autolinker.link(String(feature.properties['MSOA21NM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Yearly_Heatwave_LST_MEAN" colspan="2"><strong>Mean Heatwave LST (°C)</strong><br />' + (feature.properties['Yearly_Heatwave_LST_MEAN'] !== null ? autolinker.link(String(feature.properties['Yearly_Heatwave_LST_MEAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA_EXTREME_TEMPERATURE" colspan="2"><strong>MSOA_EXTREME_TEMPERATURE</strong><br />' + (feature.properties['MSOA_EXTREME_TEMPERATURE'] !== null ? autolinker.link(String(feature.properties['MSOA_EXTREME_TEMPERATURE']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Elderly_Heat_Vulnerable_MSOA" colspan="2"><strong>High Elderly Heat Vulnerability</strong><br />' + (feature.properties['Elderly_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Elderly_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Deprived_Heat_Vulnerable_MSOA" colspan="2"><strong>High Deprivation Heat Vulnerability</strong><br />' + (feature.properties['Deprived_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Deprived_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Population_Heat_Vulnerable_MSOA" colspan="2"><strong>High Population Heat Exposure</strong><br />' + (feature.properties['Population_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Population_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Extreme Heat Threshold Status" colspan="2"><strong>Extreme Heat Threshold Status</strong><br />' + (feature.properties['Extreme Heat Threshold Status'] !== null ? autolinker.link(String(feature.properties['Extreme Heat Threshold Status']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Composite_Vulnerability_Class" colspan="2"><strong>Overall Heat Vulnerability Class</strong><br />' + (feature.properties['Composite_Vulnerability_Class'] !== null ? autolinker.link(String(feature.properties['Composite_Vulnerability_Class']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="CITY" colspan="2"><strong>CITY</strong><br />' + (feature.properties['CITY'] !== null ? autolinker.link(String(feature.properties['CITY']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_London_1_0(feature) {
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 29.250000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 33.090000 ) {
+                return {
+                pane: 'pane_London_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,178,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 33.090000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 35.090000 ) {
+                return {
+                pane: 'pane_London_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,204,92,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 35.090000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 36.630000 ) {
+                return {
+                pane: 'pane_London_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(253,141,60,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 36.630000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 37.950000 ) {
+                return {
+                pane: 'pane_London_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(240,59,32,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 37.950000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 40.450000 ) {
+                return {
+                pane: 'pane_London_1',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(189,0,38,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_London_1');
+        map.getPane('pane_London_1').style.zIndex = 401;
+        map.getPane('pane_London_1').style['mix-blend-mode'] = 'normal';
+        var layer_London_1 = new L.geoJson(json_London_1, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_London_1',
+            layerName: 'layer_London_1',
+            pane: 'pane_London_1',
+            onEachFeature: pop_London_1,
+            style: style_London_1_0,
+        });
+        bounds_group.addLayer(layer_London_1);
+        map.addLayer(layer_London_1);
+        function pop_Birmingharm_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    for (var i in e.target._eventParents) {
+                        if (typeof e.target._eventParents[i].resetStyle === 'function') {
+                            e.target._eventParents[i].resetStyle(e.target);
+                        }
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA21CD" colspan="2"><strong>MSOA Code</strong><br />' + (feature.properties['MSOA21CD'] !== null ? autolinker.link(String(feature.properties['MSOA21CD']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA21NM" colspan="2"><strong>MSOA Name</strong><br />' + (feature.properties['MSOA21NM'] !== null ? autolinker.link(String(feature.properties['MSOA21NM']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Yearly_Heatwave_LST_MEAN" colspan="2"><strong>Mean Heatwave LST (°C)</strong><br />' + (feature.properties['Yearly_Heatwave_LST_MEAN'] !== null ? autolinker.link(String(feature.properties['Yearly_Heatwave_LST_MEAN']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="MSOA_EXTREME_TEMPERATURE" colspan="2"><strong>Extreme-Heat Threshold Status</strong><br />' + (feature.properties['MSOA_EXTREME_TEMPERATURE'] !== null ? autolinker.link(String(feature.properties['MSOA_EXTREME_TEMPERATURE']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Elderly_Heat_Vulnerable_MSOA" colspan="2"><strong>High Elderly Heat Vulnerability</strong><br />' + (feature.properties['Elderly_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Elderly_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Deprived_Heat_Vulnerable_MSOA" colspan="2"><strong>High Deprivation Heat Vulnerability</strong><br />' + (feature.properties['Deprived_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Deprived_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Population_Heat_Vulnerable_MSOA" colspan="2"><strong>High Population Heat Exposure</strong><br />' + (feature.properties['Population_Heat_Vulnerable_MSOA'] !== null ? autolinker.link(String(feature.properties['Population_Heat_Vulnerable_MSOA']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Extreme Heat Threshold Status" colspan="2"><strong>Extreme Heat Threshold Status</strong><br />' + (feature.properties['Extreme Heat Threshold Status'] !== null ? autolinker.link(String(feature.properties['Extreme Heat Threshold Status']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="CITY" colspan="2"><strong>CITY</strong><br />' + (feature.properties['CITY'] !== null ? autolinker.link(String(feature.properties['CITY']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                    <tr>\
+                        <td class="visible-with-data" id="Composite_Vulnerability_Class" colspan="2"><strong>Overall Heat Vulnerability Class</strong><br />' + (feature.properties['Composite_Vulnerability_Class'] !== null ? autolinker.link(String(feature.properties['Composite_Vulnerability_Class']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Birmingharm_2_0(feature) {
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 30.890000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 32.690000 ) {
+                return {
+                pane: 'pane_Birmingharm_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(255,255,178,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 32.690000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 34.180000 ) {
+                return {
+                pane: 'pane_Birmingharm_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(254,204,92,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 34.180000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 35.510000 ) {
+                return {
+                pane: 'pane_Birmingharm_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(253,141,60,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 35.510000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 36.760000 ) {
+                return {
+                pane: 'pane_Birmingharm_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(240,59,32,1.0)',
+                interactive: true,
+            }
+            }
+            if (feature.properties['Yearly_Heatwave_LST_MEAN'] >= 36.760000 && feature.properties['Yearly_Heatwave_LST_MEAN'] <= 39.710000 ) {
+                return {
+                pane: 'pane_Birmingharm_2',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(189,0,38,1.0)',
+                interactive: true,
+            }
+            }
+        }
+        map.createPane('pane_Birmingharm_2');
+        map.getPane('pane_Birmingharm_2').style.zIndex = 402;
+        map.getPane('pane_Birmingharm_2').style['mix-blend-mode'] = 'normal';
+        var layer_Birmingharm_2 = new L.geoJson(json_Birmingharm_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Birmingharm_2',
+            layerName: 'layer_Birmingharm_2',
+            pane: 'pane_Birmingharm_2',
+            onEachFeature: pop_Birmingharm_2,
+            style: style_Birmingharm_2_0,
+        });
+        bounds_group.addLayer(layer_Birmingharm_2);
+        map.addLayer(layer_Birmingharm_2);
+        const url = {"Nominatim OSM": "https://nominatim.openstreetmap.org/search?format=geojson&addressdetails=1&",
+        "France BAN": "https://api-adresse.data.gouv.fr/search/?"}
+        var photonControl = L.control.photon({
+            url: url["Nominatim OSM"],
+            feedbackLabel: '',
+            position: 'topleft',
+            includePosition: true,
+            initial: true,
+            // resultsHandler: myHandler,
+        }).addTo(map);
+        photonControl._container.childNodes[0].style.borderRadius="10px"
+        // Create a variable to store the geoJSON data
+        var x = null;
+        // Create a variable to store the marker
+        var marker = null;
+        // Add an event listener to the Photon control to create a marker from the returned geoJSON data
+        var z = null;
+        photonControl.on('selected', function(e) {
+            console.log(photonControl.search.resultsContainer);
+            if (x != null) {
+                map.removeLayer(obj3.marker);
+                map.removeLayer(x);
+            }
+            obj2.gcd = e.choice;
+            x = L.geoJSON(obj2.gcd).addTo(map);
+            var label = typeof obj2.gcd.properties.label === 'undefined' ? obj2.gcd.properties.display_name : obj2.gcd.properties.label;
+            obj3.marker = L.marker(x.getLayers()[0].getLatLng()).bindPopup(label).addTo(map);
+            map.setView(x.getLayers()[0].getLatLng(), 17);
+            z = typeof e.choice.properties.label === 'undefined'? e.choice.properties.display_name : e.choice.properties.label;
+            console.log(e);
+            e.target.input.value = z;
+        });
+        var search = document.getElementsByClassName("leaflet-photon leaflet-control")[0];
+        search.classList.add("leaflet-control-search")
+        search.style.display = "flex";
+        search.style.backgroundColor="rgba(255,255,255,0.5)" 
+
+        // Create the new button element
+        var button = document.createElement("div");
+        button.id = "gcd-button-control";
+        button.className = "gcd-gl-btn fa fa-search search-button";
+
+        // Insert the button at the beginning of the search control
+        search.insertBefore(button, search.firstChild);
+        last = search.lastChild;
+        last.style.display = "none";
+        button.addEventListener("click", function (e) {
+            if (last.style.display === "none") {
+                last.style.display = "block";
+            } else {
+                last.style.display = "none";
+            }
+        });
+        setBounds();
+        var mapDiv = document.getElementById('map');
+        var row = document.createElement('div');
+        row.className="row";
+        row.id="all";
+        row.style.height = "100%";
+        var col1 = document.createElement('div');
+        col1.className="col9";
+        col1.id = "mapWindow";
+        col1.style.height = "99%";
+        col1.style.width = "80%";
+        col1.style.display = "inline-block";
+        var col2 = document.createElement('div');
+        col2.className="col3";
+        col2.id = "menu";
+        col2.style.display = "inline-block";
+        mapDiv.parentNode.insertBefore(row, mapDiv);
+        document.getElementById("all").appendChild(col1);
+        document.getElementById("all").appendChild(col2);
+        col1.appendChild(mapDiv)
+        var Filters = {"Elderly_Heat_Vulnerable_MSOA": "int","Deprived_Heat_Vulnerable_MSOA": "int","Population_Heat_Vulnerable_MSOA": "int","MSOA_EXTREME_TEMPERATURE": "int","Yearly_Heatwave_LST_MEAN": "real","Extreme Heat Threshold Status": "str","Composite_Vulnerability_Class": "str","MSOA21NM": "str","CITY": "str"};
+        function filterFunc() {
+          map.eachLayer(function(lyr){
+          if ("options" in lyr && "dataVar" in lyr["options"]){
+            features = this[lyr["options"]["dataVar"]].features.slice(0);
+            try{
+              for (key in Filters){
+                keyS = key.replace(/[^a-zA-Z0-9_]/g, "")
+                if (Filters[key] == "str" || Filters[key] == "bool"){
+                  var selection = [];
+                  var options = document.getElementById("sel_" + keyS).options
+                  for (var i=0; i < options.length; i++) {
+                    if (options[i].selected) selection.push(options[i].value);
+                  }
+                    try{
+                      if (key in features[0].properties){
+                        for (i = features.length - 1;
+                          i >= 0; --i){
+                          if (selection.indexOf(
+                          features[i].properties[key])<0
+                          && selection.length>0) {
+                          features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                  }
+                }
+                if (Filters[key] == "int"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (parseInt(features[i].properties[key])
+                          < sliderVals[0]
+                          || parseInt(features[i].properties[key])
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "real"){
+                  sliderVals =  document.getElementById(
+                    "div_" + keyS).noUiSlider.get();
+                  try{
+                    if (key in features[0].properties){
+                    for (i = features.length - 1; i >= 0; --i){
+                      if (features[i].properties[key]
+                          < sliderVals[0]
+                          || features[i].properties[key]
+                          > sliderVals[1]){
+                            features.splice(i,1);
+                          }
+                        }
+                      }
+                    } catch(err){
+                    }
+                  }
+                if (Filters[key] == "date"
+                  || Filters[key] == "datetime"
+                  || Filters[key] == "time"){
+                  try{
+                    if (key in features[0].properties){
+                      HTMLkey = key.replace(/[&\\/\\#,+()$~%.'":*?<>{} ]/g, '');
+                      startdate = document.getElementById("dat_" +
+                        HTMLkey + "_date1").value.replace(" ", "T");
+                      enddate = document.getElementById("dat_" +
+                        HTMLkey + "_date2").value.replace(" ", "T");
+                      for (i = features.length - 1; i >= 0; --i){
+                        if (features[i].properties[key] < startdate
+                          || features[i].properties[key] > enddate){
+                          features.splice(i,1);
+                        }
+                      }
+                    }
+                  } catch(err){
+                  }
+                }
+              }
+            } catch(err){
+            }
+          this[lyr["options"]["layerName"]].clearLayers();
+          this[lyr["options"]["layerName"]].addData(features);
+          }
+          })
+        }
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Elderly_Heat_Vulnerable_MSOA = document.createElement("div");
+            div_Elderly_Heat_Vulnerable_MSOA.id = "div_Elderly_Heat_Vulnerable_MSOA";
+            div_Elderly_Heat_Vulnerable_MSOA.className = "slider";
+            document.getElementById("menu").appendChild(div_Elderly_Heat_Vulnerable_MSOA);
+            var lab_Elderly_Heat_Vulnerable_MSOA = document.createElement('div');
+            lab_Elderly_Heat_Vulnerable_MSOA.innerHTML  = 'Elderly_Heat_Vulnerable_MSOA: <span id="val_Elderly_Heat_Vulnerable_MSOA"></span>';
+            lab_Elderly_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Elderly_Heat_Vulnerable_MSOA);
+            var reset_Elderly_Heat_Vulnerable_MSOA = document.createElement('div');
+            reset_Elderly_Heat_Vulnerable_MSOA.innerHTML = 'clear filter';
+            reset_Elderly_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            lab_Elderly_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            reset_Elderly_Heat_Vulnerable_MSOA.onclick = function() {
+                sel_Elderly_Heat_Vulnerable_MSOA.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Elderly_Heat_Vulnerable_MSOA);
+            var sel_Elderly_Heat_Vulnerable_MSOA = document.getElementById('div_Elderly_Heat_Vulnerable_MSOA');
+            noUiSlider.create(sel_Elderly_Heat_Vulnerable_MSOA, {
+                connect: true,
+                start: [0, 2024],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 2024
+                }
+            });
+            sel_Elderly_Heat_Vulnerable_MSOA.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Elderly_Heat_Vulnerable_MSOA = document.getElementById('val_Elderly_Heat_Vulnerable_MSOA');
+            val_Elderly_Heat_Vulnerable_MSOA.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Deprived_Heat_Vulnerable_MSOA = document.createElement("div");
+            div_Deprived_Heat_Vulnerable_MSOA.id = "div_Deprived_Heat_Vulnerable_MSOA";
+            div_Deprived_Heat_Vulnerable_MSOA.className = "slider";
+            document.getElementById("menu").appendChild(div_Deprived_Heat_Vulnerable_MSOA);
+            var lab_Deprived_Heat_Vulnerable_MSOA = document.createElement('div');
+            lab_Deprived_Heat_Vulnerable_MSOA.innerHTML  = 'Deprived_Heat_Vulnerable_MSOA: <span id="val_Deprived_Heat_Vulnerable_MSOA"></span>';
+            lab_Deprived_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Deprived_Heat_Vulnerable_MSOA);
+            var reset_Deprived_Heat_Vulnerable_MSOA = document.createElement('div');
+            reset_Deprived_Heat_Vulnerable_MSOA.innerHTML = 'clear filter';
+            reset_Deprived_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            lab_Deprived_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            reset_Deprived_Heat_Vulnerable_MSOA.onclick = function() {
+                sel_Deprived_Heat_Vulnerable_MSOA.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Deprived_Heat_Vulnerable_MSOA);
+            var sel_Deprived_Heat_Vulnerable_MSOA = document.getElementById('div_Deprived_Heat_Vulnerable_MSOA');
+            noUiSlider.create(sel_Deprived_Heat_Vulnerable_MSOA, {
+                connect: true,
+                start: [0, 3756],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 3756
+                }
+            });
+            sel_Deprived_Heat_Vulnerable_MSOA.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Deprived_Heat_Vulnerable_MSOA = document.getElementById('val_Deprived_Heat_Vulnerable_MSOA');
+            val_Deprived_Heat_Vulnerable_MSOA.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Population_Heat_Vulnerable_MSOA = document.createElement("div");
+            div_Population_Heat_Vulnerable_MSOA.id = "div_Population_Heat_Vulnerable_MSOA";
+            div_Population_Heat_Vulnerable_MSOA.className = "slider";
+            document.getElementById("menu").appendChild(div_Population_Heat_Vulnerable_MSOA);
+            var lab_Population_Heat_Vulnerable_MSOA = document.createElement('div');
+            lab_Population_Heat_Vulnerable_MSOA.innerHTML  = 'Population_Heat_Vulnerable_MSOA: <span id="val_Population_Heat_Vulnerable_MSOA"></span>';
+            lab_Population_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Population_Heat_Vulnerable_MSOA);
+            var reset_Population_Heat_Vulnerable_MSOA = document.createElement('div');
+            reset_Population_Heat_Vulnerable_MSOA.innerHTML = 'clear filter';
+            reset_Population_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            lab_Population_Heat_Vulnerable_MSOA.className = 'filterlabel';
+            reset_Population_Heat_Vulnerable_MSOA.onclick = function() {
+                sel_Population_Heat_Vulnerable_MSOA.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Population_Heat_Vulnerable_MSOA);
+            var sel_Population_Heat_Vulnerable_MSOA = document.getElementById('div_Population_Heat_Vulnerable_MSOA');
+            noUiSlider.create(sel_Population_Heat_Vulnerable_MSOA, {
+                connect: true,
+                start: [0, 16292],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 16292
+                }
+            });
+            sel_Population_Heat_Vulnerable_MSOA.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_Population_Heat_Vulnerable_MSOA = document.getElementById('val_Population_Heat_Vulnerable_MSOA');
+            val_Population_Heat_Vulnerable_MSOA.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_MSOA_EXTREME_TEMPERATURE = document.createElement("div");
+            div_MSOA_EXTREME_TEMPERATURE.id = "div_MSOA_EXTREME_TEMPERATURE";
+            div_MSOA_EXTREME_TEMPERATURE.className = "slider";
+            document.getElementById("menu").appendChild(div_MSOA_EXTREME_TEMPERATURE);
+            var lab_MSOA_EXTREME_TEMPERATURE = document.createElement('div');
+            lab_MSOA_EXTREME_TEMPERATURE.innerHTML  = 'MSOA_EXTREME_TEMPERATURE: <span id="val_MSOA_EXTREME_TEMPERATURE"></span>';
+            lab_MSOA_EXTREME_TEMPERATURE.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_MSOA_EXTREME_TEMPERATURE);
+            var reset_MSOA_EXTREME_TEMPERATURE = document.createElement('div');
+            reset_MSOA_EXTREME_TEMPERATURE.innerHTML = 'clear filter';
+            reset_MSOA_EXTREME_TEMPERATURE.className = 'filterlabel';
+            lab_MSOA_EXTREME_TEMPERATURE.className = 'filterlabel';
+            reset_MSOA_EXTREME_TEMPERATURE.onclick = function() {
+                sel_MSOA_EXTREME_TEMPERATURE.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_MSOA_EXTREME_TEMPERATURE);
+            var sel_MSOA_EXTREME_TEMPERATURE = document.getElementById('div_MSOA_EXTREME_TEMPERATURE');
+            noUiSlider.create(sel_MSOA_EXTREME_TEMPERATURE, {
+                connect: true,
+                start: [0, 1],
+                step: 1,
+                format: wNumb({
+                    decimals: 0,
+                    }),
+                range: {
+                min: 0,
+                max: 1
+                }
+            });
+            sel_MSOA_EXTREME_TEMPERATURE.noUiSlider.on('update', function (values) {
+            filterVals =[];
+            for (value in values){
+            filterVals.push(parseInt(value))
+            }
+            val_MSOA_EXTREME_TEMPERATURE = document.getElementById('val_MSOA_EXTREME_TEMPERATURE');
+            val_MSOA_EXTREME_TEMPERATURE.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Yearly_Heatwave_LST_MEAN = document.createElement("div");
+            div_Yearly_Heatwave_LST_MEAN.id = "div_Yearly_Heatwave_LST_MEAN";
+            div_Yearly_Heatwave_LST_MEAN.className = "slider";
+            document.getElementById("menu").appendChild(div_Yearly_Heatwave_LST_MEAN);
+            var lab_Yearly_Heatwave_LST_MEAN = document.createElement('div');
+            lab_Yearly_Heatwave_LST_MEAN.innerHTML  = 'Yearly_Heatwave_LST_MEAN: <span id="val_Yearly_Heatwave_LST_MEAN"></span>';
+            lab_Yearly_Heatwave_LST_MEAN.className = 'filterlabel';
+            document.getElementById("menu").appendChild(lab_Yearly_Heatwave_LST_MEAN);
+            var reset_Yearly_Heatwave_LST_MEAN = document.createElement('div');
+            reset_Yearly_Heatwave_LST_MEAN.innerHTML = 'clear filter';
+            reset_Yearly_Heatwave_LST_MEAN.className = 'filterlabel';
+            lab_Yearly_Heatwave_LST_MEAN.className = 'filterlabel';
+            reset_Yearly_Heatwave_LST_MEAN.onclick = function() {
+                sel_Yearly_Heatwave_LST_MEAN.noUiSlider.reset();
+            };
+            document.getElementById("menu").appendChild(reset_Yearly_Heatwave_LST_MEAN);
+            var sel_Yearly_Heatwave_LST_MEAN = document.getElementById('div_Yearly_Heatwave_LST_MEAN');
+            noUiSlider.create(sel_Yearly_Heatwave_LST_MEAN, {
+                connect: true,
+                start: [29.25, 40.45],
+                range: {
+                min: 29.25,
+                max: 40.45
+                }
+            });
+            sel_Yearly_Heatwave_LST_MEAN.noUiSlider.on('update', function (values) {
+            val_Yearly_Heatwave_LST_MEAN = document.getElementById('val_Yearly_Heatwave_LST_MEAN');
+            val_Yearly_Heatwave_LST_MEAN.innerHTML = values.join(' - ');
+                filterFunc()
+            });
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_ExtremeHeatThresholdStatus = document.createElement('div');
+            div_ExtremeHeatThresholdStatus.id = "div_ExtremeHeatThresholdStatus";
+            div_ExtremeHeatThresholdStatus.className= "filterselect";
+            document.getElementById("menu").appendChild(div_ExtremeHeatThresholdStatus);
+            sel_ExtremeHeatThresholdStatus = document.createElement('select');
+            sel_ExtremeHeatThresholdStatus.multiple = true;
+            sel_ExtremeHeatThresholdStatus.size = 2;
+            sel_ExtremeHeatThresholdStatus.id = "sel_ExtremeHeatThresholdStatus";
+            var ExtremeHeatThresholdStatus_options_str = "<option value='' unselected></option>";
+            sel_ExtremeHeatThresholdStatus.onchange = function(){filterFunc()};
+            ExtremeHeatThresholdStatus_options_str  += '<option value="Above P90 Threshold">Above P90 Threshold</option>';
+            ExtremeHeatThresholdStatus_options_str  += '<option value="Below P90 Threshold">Below P90 Threshold</option>';
+            sel_ExtremeHeatThresholdStatus.innerHTML = ExtremeHeatThresholdStatus_options_str;
+            div_ExtremeHeatThresholdStatus.appendChild(sel_ExtremeHeatThresholdStatus);
+            var lab_ExtremeHeatThresholdStatus = document.createElement('div');
+            lab_ExtremeHeatThresholdStatus.innerHTML = 'Extreme Heat Threshold Status';
+            lab_ExtremeHeatThresholdStatus.className = 'filterlabel';
+            div_ExtremeHeatThresholdStatus.appendChild(lab_ExtremeHeatThresholdStatus);
+            var reset_ExtremeHeatThresholdStatus = document.createElement('div');
+            reset_ExtremeHeatThresholdStatus.innerHTML = 'clear filter';
+            reset_ExtremeHeatThresholdStatus.className = 'filterlabel';
+            reset_ExtremeHeatThresholdStatus.onclick = function() {
+                var options = document.getElementById("sel_ExtremeHeatThresholdStatus").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_ExtremeHeatThresholdStatus.appendChild(reset_ExtremeHeatThresholdStatus);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_Composite_Vulnerability_Class = document.createElement('div');
+            div_Composite_Vulnerability_Class.id = "div_Composite_Vulnerability_Class";
+            div_Composite_Vulnerability_Class.className= "filterselect";
+            document.getElementById("menu").appendChild(div_Composite_Vulnerability_Class);
+            sel_Composite_Vulnerability_Class = document.createElement('select');
+            sel_Composite_Vulnerability_Class.multiple = true;
+            sel_Composite_Vulnerability_Class.size = 6;
+            sel_Composite_Vulnerability_Class.id = "sel_Composite_Vulnerability_Class";
+            var Composite_Vulnerability_Class_options_str = "<option value='' unselected></option>";
+            sel_Composite_Vulnerability_Class.onchange = function(){filterFunc()};
+            Composite_Vulnerability_Class_options_str  += '<option value="NULL">NULL</option>';
+            Composite_Vulnerability_Class_options_str  += '<option value="High">High</option>';
+            Composite_Vulnerability_Class_options_str  += '<option value="Low">Low</option>';
+            Composite_Vulnerability_Class_options_str  += '<option value="Moderate">Moderate</option>';
+            Composite_Vulnerability_Class_options_str  += '<option value="Very High">Very High</option>';
+            Composite_Vulnerability_Class_options_str  += '<option value="Very Low">Very Low</option>';
+            sel_Composite_Vulnerability_Class.innerHTML = Composite_Vulnerability_Class_options_str;
+            div_Composite_Vulnerability_Class.appendChild(sel_Composite_Vulnerability_Class);
+            var lab_Composite_Vulnerability_Class = document.createElement('div');
+            lab_Composite_Vulnerability_Class.innerHTML = 'Composite_Vulnerability_Class';
+            lab_Composite_Vulnerability_Class.className = 'filterlabel';
+            div_Composite_Vulnerability_Class.appendChild(lab_Composite_Vulnerability_Class);
+            var reset_Composite_Vulnerability_Class = document.createElement('div');
+            reset_Composite_Vulnerability_Class.innerHTML = 'clear filter';
+            reset_Composite_Vulnerability_Class.className = 'filterlabel';
+            reset_Composite_Vulnerability_Class.onclick = function() {
+                var options = document.getElementById("sel_Composite_Vulnerability_Class").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_Composite_Vulnerability_Class.appendChild(reset_Composite_Vulnerability_Class);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_MSOA21NM = document.createElement('div');
+            div_MSOA21NM.id = "div_MSOA21NM";
+            div_MSOA21NM.className= "filterselect";
+            document.getElementById("menu").appendChild(div_MSOA21NM);
+            sel_MSOA21NM = document.createElement('select');
+            sel_MSOA21NM.multiple = true;
+            sel_MSOA21NM.size = 10;
+            sel_MSOA21NM.id = "sel_MSOA21NM";
+            var MSOA21NM_options_str = "<option value='' unselected></option>";
+            sel_MSOA21NM.onchange = function(){filterFunc()};
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 001">Barking and Dagenham 001</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 002">Barking and Dagenham 002</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 003">Barking and Dagenham 003</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 004">Barking and Dagenham 004</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 006">Barking and Dagenham 006</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 007">Barking and Dagenham 007</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 008">Barking and Dagenham 008</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 009">Barking and Dagenham 009</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 010">Barking and Dagenham 010</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 011">Barking and Dagenham 011</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 012">Barking and Dagenham 012</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 013">Barking and Dagenham 013</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 014">Barking and Dagenham 014</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 015">Barking and Dagenham 015</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 016">Barking and Dagenham 016</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 017">Barking and Dagenham 017</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 018">Barking and Dagenham 018</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 019">Barking and Dagenham 019</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 020">Barking and Dagenham 020</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 021">Barking and Dagenham 021</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 022">Barking and Dagenham 022</option>';
+            MSOA21NM_options_str  += '<option value="Barking and Dagenham 023">Barking and Dagenham 023</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 001">Barnet 001</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 002">Barnet 002</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 003">Barnet 003</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 004">Barnet 004</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 005">Barnet 005</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 006">Barnet 006</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 007">Barnet 007</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 008">Barnet 008</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 009">Barnet 009</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 010">Barnet 010</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 011">Barnet 011</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 012">Barnet 012</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 013">Barnet 013</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 014">Barnet 014</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 015">Barnet 015</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 016">Barnet 016</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 017">Barnet 017</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 018">Barnet 018</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 019">Barnet 019</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 020">Barnet 020</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 021">Barnet 021</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 022">Barnet 022</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 023">Barnet 023</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 024">Barnet 024</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 025">Barnet 025</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 026">Barnet 026</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 027">Barnet 027</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 028">Barnet 028</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 029">Barnet 029</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 031">Barnet 031</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 032">Barnet 032</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 033">Barnet 033</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 034">Barnet 034</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 035">Barnet 035</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 036">Barnet 036</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 037">Barnet 037</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 038">Barnet 038</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 039">Barnet 039</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 040">Barnet 040</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 041">Barnet 041</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 042">Barnet 042</option>';
+            MSOA21NM_options_str  += '<option value="Barnet 043">Barnet 043</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 001">Bexley 001</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 002">Bexley 002</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 003">Bexley 003</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 004">Bexley 004</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 005">Bexley 005</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 006">Bexley 006</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 007">Bexley 007</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 008">Bexley 008</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 009">Bexley 009</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 010">Bexley 010</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 011">Bexley 011</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 013">Bexley 013</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 014">Bexley 014</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 015">Bexley 015</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 016">Bexley 016</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 017">Bexley 017</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 018">Bexley 018</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 019">Bexley 019</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 020">Bexley 020</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 021">Bexley 021</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 022">Bexley 022</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 023">Bexley 023</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 024">Bexley 024</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 025">Bexley 025</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 026">Bexley 026</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 027">Bexley 027</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 028">Bexley 028</option>';
+            MSOA21NM_options_str  += '<option value="Bexley 029">Bexley 029</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 001">Birmingham 001</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 002">Birmingham 002</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 003">Birmingham 003</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 004">Birmingham 004</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 005">Birmingham 005</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 006">Birmingham 006</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 007">Birmingham 007</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 008">Birmingham 008</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 009">Birmingham 009</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 010">Birmingham 010</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 011">Birmingham 011</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 012">Birmingham 012</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 013">Birmingham 013</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 014">Birmingham 014</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 015">Birmingham 015</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 016">Birmingham 016</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 017">Birmingham 017</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 018">Birmingham 018</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 019">Birmingham 019</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 020">Birmingham 020</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 021">Birmingham 021</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 022">Birmingham 022</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 023">Birmingham 023</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 024">Birmingham 024</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 025">Birmingham 025</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 026">Birmingham 026</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 029">Birmingham 029</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 030">Birmingham 030</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 031">Birmingham 031</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 032">Birmingham 032</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 033">Birmingham 033</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 034">Birmingham 034</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 035">Birmingham 035</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 036">Birmingham 036</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 037">Birmingham 037</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 039">Birmingham 039</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 040">Birmingham 040</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 041">Birmingham 041</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 042">Birmingham 042</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 043">Birmingham 043</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 044">Birmingham 044</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 045">Birmingham 045</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 046">Birmingham 046</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 047">Birmingham 047</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 048">Birmingham 048</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 049">Birmingham 049</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 050">Birmingham 050</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 051">Birmingham 051</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 052">Birmingham 052</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 053">Birmingham 053</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 054">Birmingham 054</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 055">Birmingham 055</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 056">Birmingham 056</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 057">Birmingham 057</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 058">Birmingham 058</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 060">Birmingham 060</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 062">Birmingham 062</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 063">Birmingham 063</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 064">Birmingham 064</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 066">Birmingham 066</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 067">Birmingham 067</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 069">Birmingham 069</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 070">Birmingham 070</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 071">Birmingham 071</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 072">Birmingham 072</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 073">Birmingham 073</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 074">Birmingham 074</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 075">Birmingham 075</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 076">Birmingham 076</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 077">Birmingham 077</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 078">Birmingham 078</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 079">Birmingham 079</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 080">Birmingham 080</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 081">Birmingham 081</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 082">Birmingham 082</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 083">Birmingham 083</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 084">Birmingham 084</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 085">Birmingham 085</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 087">Birmingham 087</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 088">Birmingham 088</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 089">Birmingham 089</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 090">Birmingham 090</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 092">Birmingham 092</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 093">Birmingham 093</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 094">Birmingham 094</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 095">Birmingham 095</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 096">Birmingham 096</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 097">Birmingham 097</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 098">Birmingham 098</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 099">Birmingham 099</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 100">Birmingham 100</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 101">Birmingham 101</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 102">Birmingham 102</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 103">Birmingham 103</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 104">Birmingham 104</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 105">Birmingham 105</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 106">Birmingham 106</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 107">Birmingham 107</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 108">Birmingham 108</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 109">Birmingham 109</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 110">Birmingham 110</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 111">Birmingham 111</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 112">Birmingham 112</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 113">Birmingham 113</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 115">Birmingham 115</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 116">Birmingham 116</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 117">Birmingham 117</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 118">Birmingham 118</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 119">Birmingham 119</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 120">Birmingham 120</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 121">Birmingham 121</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 122">Birmingham 122</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 123">Birmingham 123</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 124">Birmingham 124</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 125">Birmingham 125</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 126">Birmingham 126</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 127">Birmingham 127</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 128">Birmingham 128</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 129">Birmingham 129</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 130">Birmingham 130</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 131">Birmingham 131</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 132">Birmingham 132</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 133">Birmingham 133</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 134">Birmingham 134</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 135">Birmingham 135</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 136">Birmingham 136</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 137">Birmingham 137</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 138">Birmingham 138</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 139">Birmingham 139</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 141">Birmingham 141</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 142">Birmingham 142</option>';
+            MSOA21NM_options_str  += '<option value="Birmingham 143">Birmingham 143</option>';
+            MSOA21NM_options_str  += '<option value="Brent 001">Brent 001</option>';
+            MSOA21NM_options_str  += '<option value="Brent 002">Brent 002</option>';
+            MSOA21NM_options_str  += '<option value="Brent 003">Brent 003</option>';
+            MSOA21NM_options_str  += '<option value="Brent 004">Brent 004</option>';
+            MSOA21NM_options_str  += '<option value="Brent 005">Brent 005</option>';
+            MSOA21NM_options_str  += '<option value="Brent 006">Brent 006</option>';
+            MSOA21NM_options_str  += '<option value="Brent 007">Brent 007</option>';
+            MSOA21NM_options_str  += '<option value="Brent 008">Brent 008</option>';
+            MSOA21NM_options_str  += '<option value="Brent 009">Brent 009</option>';
+            MSOA21NM_options_str  += '<option value="Brent 010">Brent 010</option>';
+            MSOA21NM_options_str  += '<option value="Brent 011">Brent 011</option>';
+            MSOA21NM_options_str  += '<option value="Brent 012">Brent 012</option>';
+            MSOA21NM_options_str  += '<option value="Brent 013">Brent 013</option>';
+            MSOA21NM_options_str  += '<option value="Brent 014">Brent 014</option>';
+            MSOA21NM_options_str  += '<option value="Brent 015">Brent 015</option>';
+            MSOA21NM_options_str  += '<option value="Brent 016">Brent 016</option>';
+            MSOA21NM_options_str  += '<option value="Brent 018">Brent 018</option>';
+            MSOA21NM_options_str  += '<option value="Brent 019">Brent 019</option>';
+            MSOA21NM_options_str  += '<option value="Brent 020">Brent 020</option>';
+            MSOA21NM_options_str  += '<option value="Brent 021">Brent 021</option>';
+            MSOA21NM_options_str  += '<option value="Brent 022">Brent 022</option>';
+            MSOA21NM_options_str  += '<option value="Brent 023">Brent 023</option>';
+            MSOA21NM_options_str  += '<option value="Brent 024">Brent 024</option>';
+            MSOA21NM_options_str  += '<option value="Brent 025">Brent 025</option>';
+            MSOA21NM_options_str  += '<option value="Brent 026">Brent 026</option>';
+            MSOA21NM_options_str  += '<option value="Brent 027">Brent 027</option>';
+            MSOA21NM_options_str  += '<option value="Brent 028">Brent 028</option>';
+            MSOA21NM_options_str  += '<option value="Brent 029">Brent 029</option>';
+            MSOA21NM_options_str  += '<option value="Brent 030">Brent 030</option>';
+            MSOA21NM_options_str  += '<option value="Brent 031">Brent 031</option>';
+            MSOA21NM_options_str  += '<option value="Brent 032">Brent 032</option>';
+            MSOA21NM_options_str  += '<option value="Brent 033">Brent 033</option>';
+            MSOA21NM_options_str  += '<option value="Brent 034">Brent 034</option>';
+            MSOA21NM_options_str  += '<option value="Brent 035">Brent 035</option>';
+            MSOA21NM_options_str  += '<option value="Brent 036">Brent 036</option>';
+            MSOA21NM_options_str  += '<option value="Brentwood 006">Brentwood 006</option>';
+            MSOA21NM_options_str  += '<option value="Brentwood 008">Brentwood 008</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 001">Bromley 001</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 002">Bromley 002</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 004">Bromley 004</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 005">Bromley 005</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 006">Bromley 006</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 007">Bromley 007</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 008">Bromley 008</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 009">Bromley 009</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 010">Bromley 010</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 011">Bromley 011</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 012">Bromley 012</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 013">Bromley 013</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 014">Bromley 014</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 015">Bromley 015</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 016">Bromley 016</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 018">Bromley 018</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 019">Bromley 019</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 020">Bromley 020</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 021">Bromley 021</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 022">Bromley 022</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 023">Bromley 023</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 024">Bromley 024</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 025">Bromley 025</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 026">Bromley 026</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 027">Bromley 027</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 028">Bromley 028</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 029">Bromley 029</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 030">Bromley 030</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 031">Bromley 031</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 032">Bromley 032</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 033">Bromley 033</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 034">Bromley 034</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 035">Bromley 035</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 036">Bromley 036</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 037">Bromley 037</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 039">Bromley 039</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 040">Bromley 040</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 041">Bromley 041</option>';
+            MSOA21NM_options_str  += '<option value="Bromley 042">Bromley 042</option>';
+            MSOA21NM_options_str  += '<option value="Broxbourne 007">Broxbourne 007</option>';
+            MSOA21NM_options_str  += '<option value="Broxbourne 011">Broxbourne 011</option>';
+            MSOA21NM_options_str  += '<option value="Broxbourne 013">Broxbourne 013</option>';
+            MSOA21NM_options_str  += '<option value="Camden 001">Camden 001</option>';
+            MSOA21NM_options_str  += '<option value="Camden 002">Camden 002</option>';
+            MSOA21NM_options_str  += '<option value="Camden 003">Camden 003</option>';
+            MSOA21NM_options_str  += '<option value="Camden 004">Camden 004</option>';
+            MSOA21NM_options_str  += '<option value="Camden 005">Camden 005</option>';
+            MSOA21NM_options_str  += '<option value="Camden 006">Camden 006</option>';
+            MSOA21NM_options_str  += '<option value="Camden 007">Camden 007</option>';
+            MSOA21NM_options_str  += '<option value="Camden 008">Camden 008</option>';
+            MSOA21NM_options_str  += '<option value="Camden 009">Camden 009</option>';
+            MSOA21NM_options_str  += '<option value="Camden 010">Camden 010</option>';
+            MSOA21NM_options_str  += '<option value="Camden 011">Camden 011</option>';
+            MSOA21NM_options_str  += '<option value="Camden 012">Camden 012</option>';
+            MSOA21NM_options_str  += '<option value="Camden 013">Camden 013</option>';
+            MSOA21NM_options_str  += '<option value="Camden 014">Camden 014</option>';
+            MSOA21NM_options_str  += '<option value="Camden 015">Camden 015</option>';
+            MSOA21NM_options_str  += '<option value="Camden 016">Camden 016</option>';
+            MSOA21NM_options_str  += '<option value="Camden 017">Camden 017</option>';
+            MSOA21NM_options_str  += '<option value="Camden 018">Camden 018</option>';
+            MSOA21NM_options_str  += '<option value="Camden 019">Camden 019</option>';
+            MSOA21NM_options_str  += '<option value="Camden 020">Camden 020</option>';
+            MSOA21NM_options_str  += '<option value="Camden 021">Camden 021</option>';
+            MSOA21NM_options_str  += '<option value="Camden 022">Camden 022</option>';
+            MSOA21NM_options_str  += '<option value="Camden 023">Camden 023</option>';
+            MSOA21NM_options_str  += '<option value="Camden 026">Camden 026</option>';
+            MSOA21NM_options_str  += '<option value="Camden 027">Camden 027</option>';
+            MSOA21NM_options_str  += '<option value="Camden 028">Camden 028</option>';
+            MSOA21NM_options_str  += '<option value="Camden 029">Camden 029</option>';
+            MSOA21NM_options_str  += '<option value="City of London 001">City of London 001</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 001">Coventry 001</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 002">Coventry 002</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 004">Coventry 004</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 005">Coventry 005</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 006">Coventry 006</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 007">Coventry 007</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 008">Coventry 008</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 009">Coventry 009</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 010">Coventry 010</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 011">Coventry 011</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 012">Coventry 012</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 013">Coventry 013</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 014">Coventry 014</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 015">Coventry 015</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 016">Coventry 016</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 017">Coventry 017</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 018">Coventry 018</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 019">Coventry 019</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 020">Coventry 020</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 021">Coventry 021</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 022">Coventry 022</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 023">Coventry 023</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 024">Coventry 024</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 025">Coventry 025</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 026">Coventry 026</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 027">Coventry 027</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 028">Coventry 028</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 029">Coventry 029</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 030">Coventry 030</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 031">Coventry 031</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 032">Coventry 032</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 033">Coventry 033</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 034">Coventry 034</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 035">Coventry 035</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 036">Coventry 036</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 037">Coventry 037</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 038">Coventry 038</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 039">Coventry 039</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 040">Coventry 040</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 041">Coventry 041</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 042">Coventry 042</option>';
+            MSOA21NM_options_str  += '<option value="Coventry 043">Coventry 043</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 001">Croydon 001</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 002">Croydon 002</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 003">Croydon 003</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 004">Croydon 004</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 005">Croydon 005</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 006">Croydon 006</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 007">Croydon 007</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 008">Croydon 008</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 009">Croydon 009</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 010">Croydon 010</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 011">Croydon 011</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 013">Croydon 013</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 014">Croydon 014</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 015">Croydon 015</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 016">Croydon 016</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 017">Croydon 017</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 018">Croydon 018</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 019">Croydon 019</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 020">Croydon 020</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 021">Croydon 021</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 022">Croydon 022</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 023">Croydon 023</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 024">Croydon 024</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 025">Croydon 025</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 026">Croydon 026</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 028">Croydon 028</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 029">Croydon 029</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 030">Croydon 030</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 031">Croydon 031</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 032">Croydon 032</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 033">Croydon 033</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 034">Croydon 034</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 035">Croydon 035</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 036">Croydon 036</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 037">Croydon 037</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 038">Croydon 038</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 039">Croydon 039</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 040">Croydon 040</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 041">Croydon 041</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 042">Croydon 042</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 043">Croydon 043</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 044">Croydon 044</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 045">Croydon 045</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 046">Croydon 046</option>';
+            MSOA21NM_options_str  += '<option value="Croydon 047">Croydon 047</option>';
+            MSOA21NM_options_str  += '<option value="Dartford 003">Dartford 003</option>';
+            MSOA21NM_options_str  += '<option value="Dartford 007">Dartford 007</option>';
+            MSOA21NM_options_str  += '<option value="Dartford 010">Dartford 010</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 001">Dudley 001</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 002">Dudley 002</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 003">Dudley 003</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 004">Dudley 004</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 005">Dudley 005</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 006">Dudley 006</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 007">Dudley 007</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 008">Dudley 008</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 009">Dudley 009</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 010">Dudley 010</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 011">Dudley 011</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 012">Dudley 012</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 013">Dudley 013</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 014">Dudley 014</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 015">Dudley 015</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 016">Dudley 016</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 017">Dudley 017</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 018">Dudley 018</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 019">Dudley 019</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 020">Dudley 020</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 021">Dudley 021</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 022">Dudley 022</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 023">Dudley 023</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 024">Dudley 024</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 025">Dudley 025</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 026">Dudley 026</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 027">Dudley 027</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 028">Dudley 028</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 029">Dudley 029</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 030">Dudley 030</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 031">Dudley 031</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 032">Dudley 032</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 033">Dudley 033</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 034">Dudley 034</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 035">Dudley 035</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 036">Dudley 036</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 037">Dudley 037</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 038">Dudley 038</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 039">Dudley 039</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 040">Dudley 040</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 041">Dudley 041</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 042">Dudley 042</option>';
+            MSOA21NM_options_str  += '<option value="Dudley 043">Dudley 043</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 001">Ealing 001</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 002">Ealing 002</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 003">Ealing 003</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 004">Ealing 004</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 005">Ealing 005</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 006">Ealing 006</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 007">Ealing 007</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 008">Ealing 008</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 009">Ealing 009</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 010">Ealing 010</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 011">Ealing 011</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 012">Ealing 012</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 013">Ealing 013</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 014">Ealing 014</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 015">Ealing 015</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 016">Ealing 016</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 017">Ealing 017</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 018">Ealing 018</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 019">Ealing 019</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 021">Ealing 021</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 022">Ealing 022</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 023">Ealing 023</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 024">Ealing 024</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 025">Ealing 025</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 026">Ealing 026</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 027">Ealing 027</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 028">Ealing 028</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 029">Ealing 029</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 030">Ealing 030</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 031">Ealing 031</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 032">Ealing 032</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 033">Ealing 033</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 034">Ealing 034</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 035">Ealing 035</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 038">Ealing 038</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 039">Ealing 039</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 040">Ealing 040</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 041">Ealing 041</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 042">Ealing 042</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 043">Ealing 043</option>';
+            MSOA21NM_options_str  += '<option value="Ealing 044">Ealing 044</option>';
+            MSOA21NM_options_str  += '<option value="Elmbridge 001">Elmbridge 001</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 001">Enfield 001</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 002">Enfield 002</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 003">Enfield 003</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 004">Enfield 004</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 005">Enfield 005</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 006">Enfield 006</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 007">Enfield 007</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 008">Enfield 008</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 009">Enfield 009</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 010">Enfield 010</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 011">Enfield 011</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 012">Enfield 012</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 013">Enfield 013</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 014">Enfield 014</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 015">Enfield 015</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 016">Enfield 016</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 017">Enfield 017</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 018">Enfield 018</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 019">Enfield 019</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 020">Enfield 020</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 021">Enfield 021</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 022">Enfield 022</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 023">Enfield 023</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 024">Enfield 024</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 025">Enfield 025</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 026">Enfield 026</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 027">Enfield 027</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 028">Enfield 028</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 029">Enfield 029</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 030">Enfield 030</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 031">Enfield 031</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 032">Enfield 032</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 033">Enfield 033</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 035">Enfield 035</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 036">Enfield 036</option>';
+            MSOA21NM_options_str  += '<option value="Enfield 037">Enfield 037</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 003">Epping Forest 003</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 008">Epping Forest 008</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 009">Epping Forest 009</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 015">Epping Forest 015</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 016">Epping Forest 016</option>';
+            MSOA21NM_options_str  += '<option value="Epping Forest 017">Epping Forest 017</option>';
+            MSOA21NM_options_str  += '<option value="Epsom and Ewell 001">Epsom and Ewell 001</option>';
+            MSOA21NM_options_str  += '<option value="Epsom and Ewell 002">Epsom and Ewell 002</option>';
+            MSOA21NM_options_str  += '<option value="Epsom and Ewell 003">Epsom and Ewell 003</option>';
+            MSOA21NM_options_str  += '<option value="Epsom and Ewell 005">Epsom and Ewell 005</option>';
+            MSOA21NM_options_str  += '<option value="Epsom and Ewell 009">Epsom and Ewell 009</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 001">Greenwich 001</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 002">Greenwich 002</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 003">Greenwich 003</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 005">Greenwich 005</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 006">Greenwich 006</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 007">Greenwich 007</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 008">Greenwich 008</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 009">Greenwich 009</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 011">Greenwich 011</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 012">Greenwich 012</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 014">Greenwich 014</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 015">Greenwich 015</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 016">Greenwich 016</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 017">Greenwich 017</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 019">Greenwich 019</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 020">Greenwich 020</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 021">Greenwich 021</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 022">Greenwich 022</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 023">Greenwich 023</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 025">Greenwich 025</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 027">Greenwich 027</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 028">Greenwich 028</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 029">Greenwich 029</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 030">Greenwich 030</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 031">Greenwich 031</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 032">Greenwich 032</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 033">Greenwich 033</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 034">Greenwich 034</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 035">Greenwich 035</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 037">Greenwich 037</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 038">Greenwich 038</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 039">Greenwich 039</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 040">Greenwich 040</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 041">Greenwich 041</option>';
+            MSOA21NM_options_str  += '<option value="Greenwich 042">Greenwich 042</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 001">Hackney 001</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 002">Hackney 002</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 003">Hackney 003</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 004">Hackney 004</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 006">Hackney 006</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 007">Hackney 007</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 008">Hackney 008</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 009">Hackney 009</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 010">Hackney 010</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 011">Hackney 011</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 012">Hackney 012</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 013">Hackney 013</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 014">Hackney 014</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 015">Hackney 015</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 016">Hackney 016</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 017">Hackney 017</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 018">Hackney 018</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 019">Hackney 019</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 020">Hackney 020</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 022">Hackney 022</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 023">Hackney 023</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 024">Hackney 024</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 025">Hackney 025</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 026">Hackney 026</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 028">Hackney 028</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 029">Hackney 029</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 030">Hackney 030</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 031">Hackney 031</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 032">Hackney 032</option>';
+            MSOA21NM_options_str  += '<option value="Hackney 033">Hackney 033</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 001">Hammersmith and Fulham 001</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 002">Hammersmith and Fulham 002</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 003">Hammersmith and Fulham 003</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 004">Hammersmith and Fulham 004</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 005">Hammersmith and Fulham 005</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 006">Hammersmith and Fulham 006</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 007">Hammersmith and Fulham 007</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 008">Hammersmith and Fulham 008</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 009">Hammersmith and Fulham 009</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 010">Hammersmith and Fulham 010</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 011">Hammersmith and Fulham 011</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 012">Hammersmith and Fulham 012</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 013">Hammersmith and Fulham 013</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 014">Hammersmith and Fulham 014</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 015">Hammersmith and Fulham 015</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 016">Hammersmith and Fulham 016</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 017">Hammersmith and Fulham 017</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 018">Hammersmith and Fulham 018</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 019">Hammersmith and Fulham 019</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 020">Hammersmith and Fulham 020</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 021">Hammersmith and Fulham 021</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 022">Hammersmith and Fulham 022</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 023">Hammersmith and Fulham 023</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 024">Hammersmith and Fulham 024</option>';
+            MSOA21NM_options_str  += '<option value="Hammersmith and Fulham 025">Hammersmith and Fulham 025</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 001">Haringey 001</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 002">Haringey 002</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 004">Haringey 004</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 005">Haringey 005</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 006">Haringey 006</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 007">Haringey 007</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 008">Haringey 008</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 009">Haringey 009</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 010">Haringey 010</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 011">Haringey 011</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 012">Haringey 012</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 013">Haringey 013</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 014">Haringey 014</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 015">Haringey 015</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 016">Haringey 016</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 017">Haringey 017</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 018">Haringey 018</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 019">Haringey 019</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 020">Haringey 020</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 021">Haringey 021</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 022">Haringey 022</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 023">Haringey 023</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 024">Haringey 024</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 025">Haringey 025</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 026">Haringey 026</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 027">Haringey 027</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 028">Haringey 028</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 029">Haringey 029</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 030">Haringey 030</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 031">Haringey 031</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 032">Haringey 032</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 033">Haringey 033</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 034">Haringey 034</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 035">Haringey 035</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 036">Haringey 036</option>';
+            MSOA21NM_options_str  += '<option value="Haringey 037">Haringey 037</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 001">Harrow 001</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 002">Harrow 002</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 003">Harrow 003</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 004">Harrow 004</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 005">Harrow 005</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 006">Harrow 006</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 007">Harrow 007</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 008">Harrow 008</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 009">Harrow 009</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 010">Harrow 010</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 011">Harrow 011</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 012">Harrow 012</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 013">Harrow 013</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 015">Harrow 015</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 016">Harrow 016</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 017">Harrow 017</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 019">Harrow 019</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 020">Harrow 020</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 021">Harrow 021</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 022">Harrow 022</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 023">Harrow 023</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 024">Harrow 024</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 025">Harrow 025</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 027">Harrow 027</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 028">Harrow 028</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 029">Harrow 029</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 030">Harrow 030</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 031">Harrow 031</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 032">Harrow 032</option>';
+            MSOA21NM_options_str  += '<option value="Harrow 033">Harrow 033</option>';
+            MSOA21NM_options_str  += '<option value="Havering 001">Havering 001</option>';
+            MSOA21NM_options_str  += '<option value="Havering 002">Havering 002</option>';
+            MSOA21NM_options_str  += '<option value="Havering 003">Havering 003</option>';
+            MSOA21NM_options_str  += '<option value="Havering 004">Havering 004</option>';
+            MSOA21NM_options_str  += '<option value="Havering 005">Havering 005</option>';
+            MSOA21NM_options_str  += '<option value="Havering 006">Havering 006</option>';
+            MSOA21NM_options_str  += '<option value="Havering 007">Havering 007</option>';
+            MSOA21NM_options_str  += '<option value="Havering 008">Havering 008</option>';
+            MSOA21NM_options_str  += '<option value="Havering 009">Havering 009</option>';
+            MSOA21NM_options_str  += '<option value="Havering 010">Havering 010</option>';
+            MSOA21NM_options_str  += '<option value="Havering 011">Havering 011</option>';
+            MSOA21NM_options_str  += '<option value="Havering 012">Havering 012</option>';
+            MSOA21NM_options_str  += '<option value="Havering 013">Havering 013</option>';
+            MSOA21NM_options_str  += '<option value="Havering 014">Havering 014</option>';
+            MSOA21NM_options_str  += '<option value="Havering 015">Havering 015</option>';
+            MSOA21NM_options_str  += '<option value="Havering 016">Havering 016</option>';
+            MSOA21NM_options_str  += '<option value="Havering 017">Havering 017</option>';
+            MSOA21NM_options_str  += '<option value="Havering 018">Havering 018</option>';
+            MSOA21NM_options_str  += '<option value="Havering 019">Havering 019</option>';
+            MSOA21NM_options_str  += '<option value="Havering 020">Havering 020</option>';
+            MSOA21NM_options_str  += '<option value="Havering 021">Havering 021</option>';
+            MSOA21NM_options_str  += '<option value="Havering 022">Havering 022</option>';
+            MSOA21NM_options_str  += '<option value="Havering 023">Havering 023</option>';
+            MSOA21NM_options_str  += '<option value="Havering 024">Havering 024</option>';
+            MSOA21NM_options_str  += '<option value="Havering 025">Havering 025</option>';
+            MSOA21NM_options_str  += '<option value="Havering 026">Havering 026</option>';
+            MSOA21NM_options_str  += '<option value="Havering 027">Havering 027</option>';
+            MSOA21NM_options_str  += '<option value="Havering 028">Havering 028</option>';
+            MSOA21NM_options_str  += '<option value="Havering 029">Havering 029</option>';
+            MSOA21NM_options_str  += '<option value="Havering 030">Havering 030</option>';
+            MSOA21NM_options_str  += '<option value="Hertsmere 001">Hertsmere 001</option>';
+            MSOA21NM_options_str  += '<option value="Hertsmere 004">Hertsmere 004</option>';
+            MSOA21NM_options_str  += '<option value="Hertsmere 010">Hertsmere 010</option>';
+            MSOA21NM_options_str  += '<option value="Hertsmere 011">Hertsmere 011</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 001">Hillingdon 001</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 002">Hillingdon 002</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 003">Hillingdon 003</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 004">Hillingdon 004</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 005">Hillingdon 005</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 006">Hillingdon 006</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 007">Hillingdon 007</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 008">Hillingdon 008</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 009">Hillingdon 009</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 010">Hillingdon 010</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 011">Hillingdon 011</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 013">Hillingdon 013</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 014">Hillingdon 014</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 015">Hillingdon 015</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 016">Hillingdon 016</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 017">Hillingdon 017</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 018">Hillingdon 018</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 019">Hillingdon 019</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 020">Hillingdon 020</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 021">Hillingdon 021</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 022">Hillingdon 022</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 023">Hillingdon 023</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 024">Hillingdon 024</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 025">Hillingdon 025</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 026">Hillingdon 026</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 027">Hillingdon 027</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 028">Hillingdon 028</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 029">Hillingdon 029</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 030">Hillingdon 030</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 031">Hillingdon 031</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 032">Hillingdon 032</option>';
+            MSOA21NM_options_str  += '<option value="Hillingdon 033">Hillingdon 033</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 001">Hounslow 001</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 004">Hounslow 004</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 005">Hounslow 005</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 006">Hounslow 006</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 007">Hounslow 007</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 008">Hounslow 008</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 009">Hounslow 009</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 010">Hounslow 010</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 011">Hounslow 011</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 012">Hounslow 012</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 013">Hounslow 013</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 014">Hounslow 014</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 015">Hounslow 015</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 016">Hounslow 016</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 017">Hounslow 017</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 018">Hounslow 018</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 019">Hounslow 019</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 020">Hounslow 020</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 021">Hounslow 021</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 022">Hounslow 022</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 023">Hounslow 023</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 024">Hounslow 024</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 025">Hounslow 025</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 026">Hounslow 026</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 027">Hounslow 027</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 028">Hounslow 028</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 029">Hounslow 029</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 030">Hounslow 030</option>';
+            MSOA21NM_options_str  += '<option value="Hounslow 031">Hounslow 031</option>';
+            MSOA21NM_options_str  += '<option value="Islington 001">Islington 001</option>';
+            MSOA21NM_options_str  += '<option value="Islington 002">Islington 002</option>';
+            MSOA21NM_options_str  += '<option value="Islington 003">Islington 003</option>';
+            MSOA21NM_options_str  += '<option value="Islington 004">Islington 004</option>';
+            MSOA21NM_options_str  += '<option value="Islington 005">Islington 005</option>';
+            MSOA21NM_options_str  += '<option value="Islington 006">Islington 006</option>';
+            MSOA21NM_options_str  += '<option value="Islington 007">Islington 007</option>';
+            MSOA21NM_options_str  += '<option value="Islington 008">Islington 008</option>';
+            MSOA21NM_options_str  += '<option value="Islington 009">Islington 009</option>';
+            MSOA21NM_options_str  += '<option value="Islington 010">Islington 010</option>';
+            MSOA21NM_options_str  += '<option value="Islington 011">Islington 011</option>';
+            MSOA21NM_options_str  += '<option value="Islington 012">Islington 012</option>';
+            MSOA21NM_options_str  += '<option value="Islington 013">Islington 013</option>';
+            MSOA21NM_options_str  += '<option value="Islington 014">Islington 014</option>';
+            MSOA21NM_options_str  += '<option value="Islington 015">Islington 015</option>';
+            MSOA21NM_options_str  += '<option value="Islington 016">Islington 016</option>';
+            MSOA21NM_options_str  += '<option value="Islington 017">Islington 017</option>';
+            MSOA21NM_options_str  += '<option value="Islington 018">Islington 018</option>';
+            MSOA21NM_options_str  += '<option value="Islington 019">Islington 019</option>';
+            MSOA21NM_options_str  += '<option value="Islington 020">Islington 020</option>';
+            MSOA21NM_options_str  += '<option value="Islington 021">Islington 021</option>';
+            MSOA21NM_options_str  += '<option value="Islington 022">Islington 022</option>';
+            MSOA21NM_options_str  += '<option value="Islington 023">Islington 023</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 001">Kensington and Chelsea 001</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 002">Kensington and Chelsea 002</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 003">Kensington and Chelsea 003</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 004">Kensington and Chelsea 004</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 005">Kensington and Chelsea 005</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 006">Kensington and Chelsea 006</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 007">Kensington and Chelsea 007</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 008">Kensington and Chelsea 008</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 009">Kensington and Chelsea 009</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 010">Kensington and Chelsea 010</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 011">Kensington and Chelsea 011</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 012">Kensington and Chelsea 012</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 013">Kensington and Chelsea 013</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 014">Kensington and Chelsea 014</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 015">Kensington and Chelsea 015</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 016">Kensington and Chelsea 016</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 017">Kensington and Chelsea 017</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 018">Kensington and Chelsea 018</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 019">Kensington and Chelsea 019</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 020">Kensington and Chelsea 020</option>';
+            MSOA21NM_options_str  += '<option value="Kensington and Chelsea 021">Kensington and Chelsea 021</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 001">Kingston upon Thames 001</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 002">Kingston upon Thames 002</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 003">Kingston upon Thames 003</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 004">Kingston upon Thames 004</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 005">Kingston upon Thames 005</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 006">Kingston upon Thames 006</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 007">Kingston upon Thames 007</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 008">Kingston upon Thames 008</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 009">Kingston upon Thames 009</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 010">Kingston upon Thames 010</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 011">Kingston upon Thames 011</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 012">Kingston upon Thames 012</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 013">Kingston upon Thames 013</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 014">Kingston upon Thames 014</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 015">Kingston upon Thames 015</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 016">Kingston upon Thames 016</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 017">Kingston upon Thames 017</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 018">Kingston upon Thames 018</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 019">Kingston upon Thames 019</option>';
+            MSOA21NM_options_str  += '<option value="Kingston upon Thames 020">Kingston upon Thames 020</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 002">Lambeth 002</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 003">Lambeth 003</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 004">Lambeth 004</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 005">Lambeth 005</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 006">Lambeth 006</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 007">Lambeth 007</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 008">Lambeth 008</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 009">Lambeth 009</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 010">Lambeth 010</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 011">Lambeth 011</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 012">Lambeth 012</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 013">Lambeth 013</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 014">Lambeth 014</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 015">Lambeth 015</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 016">Lambeth 016</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 017">Lambeth 017</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 018">Lambeth 018</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 019">Lambeth 019</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 020">Lambeth 020</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 021">Lambeth 021</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 022">Lambeth 022</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 023">Lambeth 023</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 024">Lambeth 024</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 025">Lambeth 025</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 026">Lambeth 026</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 027">Lambeth 027</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 028">Lambeth 028</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 029">Lambeth 029</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 030">Lambeth 030</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 031">Lambeth 031</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 032">Lambeth 032</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 033">Lambeth 033</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 034">Lambeth 034</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 035">Lambeth 035</option>';
+            MSOA21NM_options_str  += '<option value="Lambeth 036">Lambeth 036</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 001">Lewisham 001</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 002">Lewisham 002</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 003">Lewisham 003</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 005">Lewisham 005</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 006">Lewisham 006</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 007">Lewisham 007</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 008">Lewisham 008</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 009">Lewisham 009</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 010">Lewisham 010</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 011">Lewisham 011</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 013">Lewisham 013</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 014">Lewisham 014</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 015">Lewisham 015</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 016">Lewisham 016</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 017">Lewisham 017</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 018">Lewisham 018</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 019">Lewisham 019</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 020">Lewisham 020</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 021">Lewisham 021</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 022">Lewisham 022</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 023">Lewisham 023</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 024">Lewisham 024</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 025">Lewisham 025</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 026">Lewisham 026</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 027">Lewisham 027</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 028">Lewisham 028</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 029">Lewisham 029</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 030">Lewisham 030</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 031">Lewisham 031</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 033">Lewisham 033</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 034">Lewisham 034</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 035">Lewisham 035</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 037">Lewisham 037</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 038">Lewisham 038</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 039">Lewisham 039</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 040">Lewisham 040</option>';
+            MSOA21NM_options_str  += '<option value="Lewisham 041">Lewisham 041</option>';
+            MSOA21NM_options_str  += '<option value="Merton 001">Merton 001</option>';
+            MSOA21NM_options_str  += '<option value="Merton 002">Merton 002</option>';
+            MSOA21NM_options_str  += '<option value="Merton 003">Merton 003</option>';
+            MSOA21NM_options_str  += '<option value="Merton 004">Merton 004</option>';
+            MSOA21NM_options_str  += '<option value="Merton 005">Merton 005</option>';
+            MSOA21NM_options_str  += '<option value="Merton 006">Merton 006</option>';
+            MSOA21NM_options_str  += '<option value="Merton 007">Merton 007</option>';
+            MSOA21NM_options_str  += '<option value="Merton 008">Merton 008</option>';
+            MSOA21NM_options_str  += '<option value="Merton 009">Merton 009</option>';
+            MSOA21NM_options_str  += '<option value="Merton 010">Merton 010</option>';
+            MSOA21NM_options_str  += '<option value="Merton 011">Merton 011</option>';
+            MSOA21NM_options_str  += '<option value="Merton 012">Merton 012</option>';
+            MSOA21NM_options_str  += '<option value="Merton 013">Merton 013</option>';
+            MSOA21NM_options_str  += '<option value="Merton 014">Merton 014</option>';
+            MSOA21NM_options_str  += '<option value="Merton 015">Merton 015</option>';
+            MSOA21NM_options_str  += '<option value="Merton 016">Merton 016</option>';
+            MSOA21NM_options_str  += '<option value="Merton 017">Merton 017</option>';
+            MSOA21NM_options_str  += '<option value="Merton 018">Merton 018</option>';
+            MSOA21NM_options_str  += '<option value="Merton 019">Merton 019</option>';
+            MSOA21NM_options_str  += '<option value="Merton 020">Merton 020</option>';
+            MSOA21NM_options_str  += '<option value="Merton 021">Merton 021</option>';
+            MSOA21NM_options_str  += '<option value="Merton 022">Merton 022</option>';
+            MSOA21NM_options_str  += '<option value="Merton 023">Merton 023</option>';
+            MSOA21NM_options_str  += '<option value="Merton 024">Merton 024</option>';
+            MSOA21NM_options_str  += '<option value="Merton 025">Merton 025</option>';
+            MSOA21NM_options_str  += '<option value="Mole Valley 002">Mole Valley 002</option>';
+            MSOA21NM_options_str  += '<option value="Mole Valley 003">Mole Valley 003</option>';
+            MSOA21NM_options_str  += '<option value="Newham 001">Newham 001</option>';
+            MSOA21NM_options_str  += '<option value="Newham 002">Newham 002</option>';
+            MSOA21NM_options_str  += '<option value="Newham 003">Newham 003</option>';
+            MSOA21NM_options_str  += '<option value="Newham 004">Newham 004</option>';
+            MSOA21NM_options_str  += '<option value="Newham 005">Newham 005</option>';
+            MSOA21NM_options_str  += '<option value="Newham 006">Newham 006</option>';
+            MSOA21NM_options_str  += '<option value="Newham 007">Newham 007</option>';
+            MSOA21NM_options_str  += '<option value="Newham 008">Newham 008</option>';
+            MSOA21NM_options_str  += '<option value="Newham 009">Newham 009</option>';
+            MSOA21NM_options_str  += '<option value="Newham 010">Newham 010</option>';
+            MSOA21NM_options_str  += '<option value="Newham 011">Newham 011</option>';
+            MSOA21NM_options_str  += '<option value="Newham 012">Newham 012</option>';
+            MSOA21NM_options_str  += '<option value="Newham 014">Newham 014</option>';
+            MSOA21NM_options_str  += '<option value="Newham 015">Newham 015</option>';
+            MSOA21NM_options_str  += '<option value="Newham 016">Newham 016</option>';
+            MSOA21NM_options_str  += '<option value="Newham 017">Newham 017</option>';
+            MSOA21NM_options_str  += '<option value="Newham 018">Newham 018</option>';
+            MSOA21NM_options_str  += '<option value="Newham 019">Newham 019</option>';
+            MSOA21NM_options_str  += '<option value="Newham 020">Newham 020</option>';
+            MSOA21NM_options_str  += '<option value="Newham 021">Newham 021</option>';
+            MSOA21NM_options_str  += '<option value="Newham 022">Newham 022</option>';
+            MSOA21NM_options_str  += '<option value="Newham 023">Newham 023</option>';
+            MSOA21NM_options_str  += '<option value="Newham 024">Newham 024</option>';
+            MSOA21NM_options_str  += '<option value="Newham 025">Newham 025</option>';
+            MSOA21NM_options_str  += '<option value="Newham 026">Newham 026</option>';
+            MSOA21NM_options_str  += '<option value="Newham 027">Newham 027</option>';
+            MSOA21NM_options_str  += '<option value="Newham 028">Newham 028</option>';
+            MSOA21NM_options_str  += '<option value="Newham 029">Newham 029</option>';
+            MSOA21NM_options_str  += '<option value="Newham 030">Newham 030</option>';
+            MSOA21NM_options_str  += '<option value="Newham 031">Newham 031</option>';
+            MSOA21NM_options_str  += '<option value="Newham 032">Newham 032</option>';
+            MSOA21NM_options_str  += '<option value="Newham 033">Newham 033</option>';
+            MSOA21NM_options_str  += '<option value="Newham 034">Newham 034</option>';
+            MSOA21NM_options_str  += '<option value="Newham 035">Newham 035</option>';
+            MSOA21NM_options_str  += '<option value="Newham 036">Newham 036</option>';
+            MSOA21NM_options_str  += '<option value="Newham 038">Newham 038</option>';
+            MSOA21NM_options_str  += '<option value="Newham 039">Newham 039</option>';
+            MSOA21NM_options_str  += '<option value="Newham 040">Newham 040</option>';
+            MSOA21NM_options_str  += '<option value="Newham 041">Newham 041</option>';
+            MSOA21NM_options_str  += '<option value="Newham 042">Newham 042</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 001">Redbridge 001</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 002">Redbridge 002</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 003">Redbridge 003</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 004">Redbridge 004</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 005">Redbridge 005</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 006">Redbridge 006</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 007">Redbridge 007</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 008">Redbridge 008</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 009">Redbridge 009</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 010">Redbridge 010</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 012">Redbridge 012</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 013">Redbridge 013</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 014">Redbridge 014</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 015">Redbridge 015</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 017">Redbridge 017</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 018">Redbridge 018</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 020">Redbridge 020</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 022">Redbridge 022</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 023">Redbridge 023</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 024">Redbridge 024</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 026">Redbridge 026</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 027">Redbridge 027</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 029">Redbridge 029</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 031">Redbridge 031</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 032">Redbridge 032</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 033">Redbridge 033</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 034">Redbridge 034</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 035">Redbridge 035</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 036">Redbridge 036</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 037">Redbridge 037</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 038">Redbridge 038</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 039">Redbridge 039</option>';
+            MSOA21NM_options_str  += '<option value="Redbridge 040">Redbridge 040</option>';
+            MSOA21NM_options_str  += '<option value="Reigate and Banstead 001">Reigate and Banstead 001</option>';
+            MSOA21NM_options_str  += '<option value="Reigate and Banstead 002">Reigate and Banstead 002</option>';
+            MSOA21NM_options_str  += '<option value="Reigate and Banstead 004">Reigate and Banstead 004</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 001">Richmond upon Thames 001</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 002">Richmond upon Thames 002</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 003">Richmond upon Thames 003</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 004">Richmond upon Thames 004</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 005">Richmond upon Thames 005</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 006">Richmond upon Thames 006</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 007">Richmond upon Thames 007</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 008">Richmond upon Thames 008</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 009">Richmond upon Thames 009</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 010">Richmond upon Thames 010</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 011">Richmond upon Thames 011</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 012">Richmond upon Thames 012</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 013">Richmond upon Thames 013</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 014">Richmond upon Thames 014</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 015">Richmond upon Thames 015</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 016">Richmond upon Thames 016</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 017">Richmond upon Thames 017</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 018">Richmond upon Thames 018</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 019">Richmond upon Thames 019</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 020">Richmond upon Thames 020</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 021">Richmond upon Thames 021</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 022">Richmond upon Thames 022</option>';
+            MSOA21NM_options_str  += '<option value="Richmond upon Thames 023">Richmond upon Thames 023</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 001">Sandwell 001</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 002">Sandwell 002</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 003">Sandwell 003</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 004">Sandwell 004</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 005">Sandwell 005</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 006">Sandwell 006</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 007">Sandwell 007</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 009">Sandwell 009</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 010">Sandwell 010</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 011">Sandwell 011</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 012">Sandwell 012</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 013">Sandwell 013</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 014">Sandwell 014</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 015">Sandwell 015</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 016">Sandwell 016</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 017">Sandwell 017</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 018">Sandwell 018</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 019">Sandwell 019</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 020">Sandwell 020</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 021">Sandwell 021</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 022">Sandwell 022</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 023">Sandwell 023</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 024">Sandwell 024</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 025">Sandwell 025</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 027">Sandwell 027</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 028">Sandwell 028</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 029">Sandwell 029</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 030">Sandwell 030</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 031">Sandwell 031</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 032">Sandwell 032</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 033">Sandwell 033</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 034">Sandwell 034</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 035">Sandwell 035</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 036">Sandwell 036</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 037">Sandwell 037</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 038">Sandwell 038</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 039">Sandwell 039</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 040">Sandwell 040</option>';
+            MSOA21NM_options_str  += '<option value="Sandwell 041">Sandwell 041</option>';
+            MSOA21NM_options_str  += '<option value="Sevenoaks 002">Sevenoaks 002</option>';
+            MSOA21NM_options_str  += '<option value="Sevenoaks 003">Sevenoaks 003</option>';
+            MSOA21NM_options_str  += '<option value="Sevenoaks 008">Sevenoaks 008</option>';
+            MSOA21NM_options_str  += '<option value="Sevenoaks 013">Sevenoaks 013</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 001">Solihull 001</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 002">Solihull 002</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 003">Solihull 003</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 004">Solihull 004</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 005">Solihull 005</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 006">Solihull 006</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 007">Solihull 007</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 008">Solihull 008</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 009">Solihull 009</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 010">Solihull 010</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 011">Solihull 011</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 012">Solihull 012</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 013">Solihull 013</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 014">Solihull 014</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 015">Solihull 015</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 016">Solihull 016</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 017">Solihull 017</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 018">Solihull 018</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 019">Solihull 019</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 021">Solihull 021</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 022">Solihull 022</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 023">Solihull 023</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 024">Solihull 024</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 025">Solihull 025</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 026">Solihull 026</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 027">Solihull 027</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 028">Solihull 028</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 029">Solihull 029</option>';
+            MSOA21NM_options_str  += '<option value="Solihull 030">Solihull 030</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 001">Southwark 001</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 002">Southwark 002</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 004">Southwark 004</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 006">Southwark 006</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 007">Southwark 007</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 008">Southwark 008</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 009">Southwark 009</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 010">Southwark 010</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 011">Southwark 011</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 012">Southwark 012</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 013">Southwark 013</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 014">Southwark 014</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 015">Southwark 015</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 016">Southwark 016</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 017">Southwark 017</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 018">Southwark 018</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 019">Southwark 019</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 020">Southwark 020</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 021">Southwark 021</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 022">Southwark 022</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 023">Southwark 023</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 024">Southwark 024</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 025">Southwark 025</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 026">Southwark 026</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 027">Southwark 027</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 028">Southwark 028</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 029">Southwark 029</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 030">Southwark 030</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 031">Southwark 031</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 032">Southwark 032</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 033">Southwark 033</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 034">Southwark 034</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 035">Southwark 035</option>';
+            MSOA21NM_options_str  += '<option value="Southwark 036">Southwark 036</option>';
+            MSOA21NM_options_str  += '<option value="Spelthorne 005">Spelthorne 005</option>';
+            MSOA21NM_options_str  += '<option value="Spelthorne 008">Spelthorne 008</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 001">Sutton 001</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 002">Sutton 002</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 003">Sutton 003</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 004">Sutton 004</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 005">Sutton 005</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 006">Sutton 006</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 007">Sutton 007</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 008">Sutton 008</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 009">Sutton 009</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 010">Sutton 010</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 011">Sutton 011</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 012">Sutton 012</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 013">Sutton 013</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 014">Sutton 014</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 015">Sutton 015</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 016">Sutton 016</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 017">Sutton 017</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 018">Sutton 018</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 019">Sutton 019</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 020">Sutton 020</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 021">Sutton 021</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 022">Sutton 022</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 024">Sutton 024</option>';
+            MSOA21NM_options_str  += '<option value="Sutton 025">Sutton 025</option>';
+            MSOA21NM_options_str  += '<option value="Tandridge 002">Tandridge 002</option>';
+            MSOA21NM_options_str  += '<option value="Tandridge 003">Tandridge 003</option>';
+            MSOA21NM_options_str  += '<option value="Tandridge 012">Tandridge 012</option>';
+            MSOA21NM_options_str  += '<option value="Three Rivers 011">Three Rivers 011</option>';
+            MSOA21NM_options_str  += '<option value="Three Rivers 012">Three Rivers 012</option>';
+            MSOA21NM_options_str  += '<option value="Thurrock 004">Thurrock 004</option>';
+            MSOA21NM_options_str  += '<option value="Thurrock 006">Thurrock 006</option>';
+            MSOA21NM_options_str  += '<option value="Thurrock 008">Thurrock 008</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 001">Tower Hamlets 001</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 002">Tower Hamlets 002</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 003">Tower Hamlets 003</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 004">Tower Hamlets 004</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 005">Tower Hamlets 005</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 006">Tower Hamlets 006</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 007">Tower Hamlets 007</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 008">Tower Hamlets 008</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 009">Tower Hamlets 009</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 010">Tower Hamlets 010</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 011">Tower Hamlets 011</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 012">Tower Hamlets 012</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 013">Tower Hamlets 013</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 014">Tower Hamlets 014</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 015">Tower Hamlets 015</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 016">Tower Hamlets 016</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 017">Tower Hamlets 017</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 018">Tower Hamlets 018</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 019">Tower Hamlets 019</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 020">Tower Hamlets 020</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 021">Tower Hamlets 021</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 022">Tower Hamlets 022</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 023">Tower Hamlets 023</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 024">Tower Hamlets 024</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 025">Tower Hamlets 025</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 026">Tower Hamlets 026</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 027">Tower Hamlets 027</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 030">Tower Hamlets 030</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 031">Tower Hamlets 031</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 032">Tower Hamlets 032</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 033">Tower Hamlets 033</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 034">Tower Hamlets 034</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 035">Tower Hamlets 035</option>';
+            MSOA21NM_options_str  += '<option value="Tower Hamlets 036">Tower Hamlets 036</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 001">Walsall 001</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 002">Walsall 002</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 003">Walsall 003</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 004">Walsall 004</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 005">Walsall 005</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 006">Walsall 006</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 007">Walsall 007</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 008">Walsall 008</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 009">Walsall 009</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 010">Walsall 010</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 011">Walsall 011</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 012">Walsall 012</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 013">Walsall 013</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 014">Walsall 014</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 015">Walsall 015</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 016">Walsall 016</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 017">Walsall 017</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 018">Walsall 018</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 019">Walsall 019</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 020">Walsall 020</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 021">Walsall 021</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 022">Walsall 022</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 023">Walsall 023</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 024">Walsall 024</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 025">Walsall 025</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 026">Walsall 026</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 027">Walsall 027</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 028">Walsall 028</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 029">Walsall 029</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 030">Walsall 030</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 031">Walsall 031</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 032">Walsall 032</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 033">Walsall 033</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 034">Walsall 034</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 035">Walsall 035</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 036">Walsall 036</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 037">Walsall 037</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 038">Walsall 038</option>';
+            MSOA21NM_options_str  += '<option value="Walsall 039">Walsall 039</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 001">Waltham Forest 001</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 002">Waltham Forest 002</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 003">Waltham Forest 003</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 004">Waltham Forest 004</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 005">Waltham Forest 005</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 006">Waltham Forest 006</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 007">Waltham Forest 007</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 008">Waltham Forest 008</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 009">Waltham Forest 009</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 010">Waltham Forest 010</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 011">Waltham Forest 011</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 012">Waltham Forest 012</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 013">Waltham Forest 013</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 014">Waltham Forest 014</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 015">Waltham Forest 015</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 016">Waltham Forest 016</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 017">Waltham Forest 017</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 018">Waltham Forest 018</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 019">Waltham Forest 019</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 020">Waltham Forest 020</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 021">Waltham Forest 021</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 022">Waltham Forest 022</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 023">Waltham Forest 023</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 024">Waltham Forest 024</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 025">Waltham Forest 025</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 026">Waltham Forest 026</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 027">Waltham Forest 027</option>';
+            MSOA21NM_options_str  += '<option value="Waltham Forest 028">Waltham Forest 028</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 001">Wandsworth 001</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 003">Wandsworth 003</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 004">Wandsworth 004</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 005">Wandsworth 005</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 006">Wandsworth 006</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 007">Wandsworth 007</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 008">Wandsworth 008</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 009">Wandsworth 009</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 010">Wandsworth 010</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 011">Wandsworth 011</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 012">Wandsworth 012</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 013">Wandsworth 013</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 014">Wandsworth 014</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 015">Wandsworth 015</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 016">Wandsworth 016</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 017">Wandsworth 017</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 018">Wandsworth 018</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 019">Wandsworth 019</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 020">Wandsworth 020</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 021">Wandsworth 021</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 022">Wandsworth 022</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 023">Wandsworth 023</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 024">Wandsworth 024</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 025">Wandsworth 025</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 026">Wandsworth 026</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 027">Wandsworth 027</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 028">Wandsworth 028</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 029">Wandsworth 029</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 030">Wandsworth 030</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 031">Wandsworth 031</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 032">Wandsworth 032</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 033">Wandsworth 033</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 034">Wandsworth 034</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 035">Wandsworth 035</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 036">Wandsworth 036</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 037">Wandsworth 037</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 038">Wandsworth 038</option>';
+            MSOA21NM_options_str  += '<option value="Wandsworth 039">Wandsworth 039</option>';
+            MSOA21NM_options_str  += '<option value="Welwyn Hatfield 016">Welwyn Hatfield 016</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 001">Westminster 001</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 002">Westminster 002</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 003">Westminster 003</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 004">Westminster 004</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 005">Westminster 005</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 006">Westminster 006</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 007">Westminster 007</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 008">Westminster 008</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 009">Westminster 009</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 010">Westminster 010</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 011">Westminster 011</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 012">Westminster 012</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 013">Westminster 013</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 014">Westminster 014</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 015">Westminster 015</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 016">Westminster 016</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 017">Westminster 017</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 018">Westminster 018</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 019">Westminster 019</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 020">Westminster 020</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 021">Westminster 021</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 022">Westminster 022</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 023">Westminster 023</option>';
+            MSOA21NM_options_str  += '<option value="Westminster 024">Westminster 024</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 001">Wolverhampton 001</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 002">Wolverhampton 002</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 003">Wolverhampton 003</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 004">Wolverhampton 004</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 005">Wolverhampton 005</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 006">Wolverhampton 006</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 007">Wolverhampton 007</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 008">Wolverhampton 008</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 009">Wolverhampton 009</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 010">Wolverhampton 010</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 011">Wolverhampton 011</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 012">Wolverhampton 012</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 013">Wolverhampton 013</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 014">Wolverhampton 014</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 015">Wolverhampton 015</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 016">Wolverhampton 016</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 017">Wolverhampton 017</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 018">Wolverhampton 018</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 019">Wolverhampton 019</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 020">Wolverhampton 020</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 021">Wolverhampton 021</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 022">Wolverhampton 022</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 023">Wolverhampton 023</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 026">Wolverhampton 026</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 027">Wolverhampton 027</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 028">Wolverhampton 028</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 029">Wolverhampton 029</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 030">Wolverhampton 030</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 031">Wolverhampton 031</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 032">Wolverhampton 032</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 033">Wolverhampton 033</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 034">Wolverhampton 034</option>';
+            MSOA21NM_options_str  += '<option value="Wolverhampton 035">Wolverhampton 035</option>';
+            sel_MSOA21NM.innerHTML = MSOA21NM_options_str;
+            div_MSOA21NM.appendChild(sel_MSOA21NM);
+            var lab_MSOA21NM = document.createElement('div');
+            lab_MSOA21NM.innerHTML = 'MSOA21NM';
+            lab_MSOA21NM.className = 'filterlabel';
+            div_MSOA21NM.appendChild(lab_MSOA21NM);
+            var reset_MSOA21NM = document.createElement('div');
+            reset_MSOA21NM.innerHTML = 'clear filter';
+            reset_MSOA21NM.className = 'filterlabel';
+            reset_MSOA21NM.onclick = function() {
+                var options = document.getElementById("sel_MSOA21NM").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_MSOA21NM.appendChild(reset_MSOA21NM);
+            document.getElementById("menu").appendChild(
+                document.createElement("div"));
+            var div_CITY = document.createElement('div');
+            div_CITY.id = "div_CITY";
+            div_CITY.className= "filterselect";
+            document.getElementById("menu").appendChild(div_CITY);
+            sel_CITY = document.createElement('select');
+            sel_CITY.multiple = true;
+            sel_CITY.size = 2;
+            sel_CITY.id = "sel_CITY";
+            var CITY_options_str = "<option value='' unselected></option>";
+            sel_CITY.onchange = function(){filterFunc()};
+            CITY_options_str  += '<option value="Birmingham">Birmingham</option>';
+            CITY_options_str  += '<option value="London">London</option>';
+            sel_CITY.innerHTML = CITY_options_str;
+            div_CITY.appendChild(sel_CITY);
+            var lab_CITY = document.createElement('div');
+            lab_CITY.innerHTML = 'CITY';
+            lab_CITY.className = 'filterlabel';
+            div_CITY.appendChild(lab_CITY);
+            var reset_CITY = document.createElement('div');
+            reset_CITY.innerHTML = 'clear filter';
+            reset_CITY.className = 'filterlabel';
+            reset_CITY.onclick = function() {
+                var options = document.getElementById("sel_CITY").options;
+                for (var i=0; i < options.length; i++) {
+                    options[i].selected = false;
+                }
+                filterFunc();
+            };
+            div_CITY.appendChild(reset_CITY);
+        </script>        
+    </body>
+</html>
